@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>جدول عمل الموظفين</title>
@@ -589,139 +591,109 @@
             }
         }
 
-        // Render table
-        function renderTable() {
-            const tbody = document.getElementById('scheduleBody');
-            tbody.innerHTML = '';
-
-            staff.forEach((person, index) => {
-                const row = document.createElement('tr');
-                
-                // Staff name cell
-                const nameCell = document.createElement('td');
-                nameCell.className = 'name-cell';
-                nameCell.innerHTML = `
-                    <div class="staff-name" onclick="editStaffName(${person.id}, '${person.name}')">
-                        <span>${person.title}/${person.name}</span>
-                        <span class="icon-edit" style="font-size: 10px;"></span>
-                    </div>
-                `;
-                row.appendChild(nameCell);
-
-                // Day cells
-                days.forEach(day => {
-                    const dayCell = document.createElement('td');
-                    const status = schedule[person.id] ? schedule[person.id][day] : 'عمل';
-                    const statusClass = status === 'عمل' ? 'status-work' : 'status-holiday';
-                    
-                    dayCell.innerHTML = `
-                        <button class="status-btn ${statusClass}" onclick="toggleSchedule(${person.id}, '${day}')">
-                            ${status}
-                        </button>
-                    `;
-                    row.appendChild(dayCell);
-                });
-
-                // Remove button cell
-                const actionCell = document.createElement('td');
-                actionCell.innerHTML = `
-                    <button class="btn btn-danger" onclick="removeStaff(${person.id})" title="حذف الموظف">
-                        <span class="icon-minus"></span>
-                    </button>
-                `;
-                row.appendChild(actionCell);
-
-                tbody.appendChild(row);
-            });
-        }
-
-        // Event listeners
-        document.getElementById('newStaffName').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addStaff();
-            }
-        });
-
-        // Initialize app
-        initSchedule();
-
-        // Improved PDF generation function
-        function generatePDF() {
+<script>
+// دالة تصدير PDF معدلة بالكامل
+async function generatePDF() {
     // عرض مؤشر التحميل
     document.getElementById('pdfLoading').style.display = 'flex';
     
-    // إعداد تاريخ الطباعة إذا كان مفعلاً
-    if (document.getElementById('includeDatePrint').checked) {
-        const now = new Date();
-        const printDate = now.toLocaleDateString('ar-EG', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        document.getElementById('printDate').textContent = printDate;
-    }
-
-    // إنشاء نسخة من الجدول للتصدير
-    const tableClone = document.getElementById('scheduleTable').cloneNode(true);
-    tableClone.style.width = '100%';
-    tableClone.style.fontFamily = "'Traditional Arabic', Arial, sans-serif";
-    tableClone.style.direction = 'rtl';
-    document.body.appendChild(tableClone);
-    
-    // استخدام html2canvas مع إعدادات محسنة
-    html2canvas(tableClone, {
-        scale: 2,
-        logging: false,
-        useCORS: true,
-        allowTaint: true,
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: tableClone.scrollWidth,
-        windowHeight: tableClone.scrollHeight
-    }).then(canvas => {
-        // إزالة النسخة المؤقتة
-        document.body.removeChild(tableClone);
-        
-        // إنشاء PDF
-        const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF({
-            orientation: 'landscape',
-            unit: 'mm',
-            format: 'a4'
-        });
-        
-        // إضافة الخط العربي (مطلوب لبعض المتصفحات)
-        pdf.addFont('https://fonts.googleapis.com/css2?family=Amiri&display=swap', 'Amiri', 'normal');
-        
-        // إضافة العنوان والتاريخ
-        pdf.setFont('Amiri');
-        pdf.setFontSize(16);
-        pdf.text('جدول عمل الموظفين - Staff Schedule', 105, 20, { align: 'center' });
-        
-        if (document.getElementById('includeDatePrint').checked) {
-            pdf.setFontSize(12);
-            const printDate = document.getElementById('printDate').textContent;
-            pdf.text('تاريخ الطباعة: ' + printDate, 105, 30, { align: 'center' });
+    // تعريف الخطوط العربية
+    pdfMake.fonts = {
+        Amiri: {
+            normal: 'https://cdn.jsdelivr.net/gh/arabic-fonts/amiri-font@1.0.0/Amiri-Regular.ttf',
+            bold: 'https://cdn.jsdelivr.net/gh/arabic-fonts/amiri-font@1.0.0/Amiri-Bold.ttf',
         }
-        
-        // إضافة صورة الجدول إلى PDF
-        const imgData = canvas.toDataURL('image/jpeg', 0.95);
-        const pdfWidth = pdf.internal.pageSize.getWidth() - 40;
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
-        // وضع الصورة في منتصف الصفحة
-        pdf.addImage(imgData, 'JPEG', 20, 40, pdfWidth, pdfHeight);
-        
-        // حفظ الملف
-        pdf.save('جدول-الموظفين.pdf');
-        
-        // إخفاء مؤشر التحميل
-        document.getElementById('pdfLoading').style.display = 'none';
-    }).catch(error => {
-        console.error('Error generating PDF:', error);
-        document.getElementById('pdfLoading').style.display = 'none';
-        alert('حدث خطأ أثناء إنشاء ملف PDF. الرجاء المحاولة مرة أخرى.');
+    };
+
+    // إعداد بيانات الجدول
+    const tableBody = [];
+    
+    // إضافة رأس الجدول
+    const headers = ['الموظف', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'حذف'];
+    tableBody.push(headers.map(header => ({ text: header, style: 'tableHeader', alignment: 'center' })));
+    
+    // إضافة بيانات الموظفين
+    staff.forEach(person => {
+        const row = [
+            { text: `${person.title}/${person.name}`, style: 'nameCell' },
+            ...days.map(day => ({
+                text: schedule[person.id] ? schedule[person.id][day] : 'عمل',
+                style: schedule[person.id] && schedule[person.id][day] === 'اجازة' ? 'holidayCell' : 'workCell',
+                alignment: 'center'
+            })),
+            { text: '', style: 'emptyCell' }
+        ];
+        tableBody.push(row);
     });
+
+    // تعريف مستند PDF
+    const docDefinition = {
+        pageOrientation: 'landscape',
+        content: [
+            { 
+                text: 'جدول عمل الموظفين\nStaff Schedule', 
+                style: 'header',
+                alignment: 'center',
+                margin: [0, 0, 0, 10]
+            },
+            {
+                table: {
+                    headerRows: 1,
+                    widths: ['auto', '*', '*', '*', '*', '*', '*', '*', 20],
+                    body: tableBody
+                },
+                layout: {
+                    fillColor: function(rowIndex) {
+                        return (rowIndex === 0) ? '#f9fafb' : (rowIndex % 2 === 0) ? '#f9fafb' : null;
+                    }
+                }
+            }
+        ],
+        styles: {
+            header: {
+                fontSize: 18,
+                bold: true,
+                font: 'Amiri'
+            },
+            tableHeader: {
+                bold: true,
+                fontSize: 12,
+                color: '#374151',
+                font: 'Amiri'
+            },
+            nameCell: {
+                font: 'Amiri',
+                alignment: 'right'
+            },
+            workCell: {
+                font: 'Amiri',
+                color: '#166534',
+                backgroundColor: '#dcfce7'
+            },
+            holidayCell: {
+                font: 'Amiri',
+                color: '#991b1b',
+                backgroundColor: '#fee2e2'
+            },
+            emptyCell: {
+                font: 'Amiri'
+            }
+        },
+        defaultStyle: {
+            font: 'Amiri',
+            fontSize: 10
+        }
+    };
+
+    // إنشاء و تحميل PDF
+    try {
+        pdfMake.createPdf(docDefinition).download('جدول-الموظفين.pdf');
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        alert('حدث خطأ أثناء إنشاء ملف PDF. الرجاء المحاولة مرة أخرى.');
+    } finally {
+        document.getElementById('pdfLoading').style.display = 'none';
+    }
 }
         // Print function
         function printTable() {
