@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <!-- استبدل مكتبة jsPDF بهذه المكتبات -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>جدول عمل الموظفين</title>
     <!-- jsPDF Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -410,15 +410,17 @@
                 </div>
             </div>
             <div class="print-buttons">
-                <button class="btn btn-success" onclick="generatePDF()">
-                    <span class="icon-print"></span>
-                    تحميل PDF
-                </button>
-                <button class="btn btn-primary" onclick="printTable()">
-                    <span class="icon-print"></span>
-                    طباعة مباشرة
-                </button>
-            </div>
+    <!-- استبدل الزر القديم بهذا -->
+    <button class="btn btn-success" onclick="generatePDF()">
+        <span class="icon-print"></span>
+        تحميل PDF
+    </button>
+    
+    <button class="btn btn-primary" onclick="printTable()">
+        <span class="icon-print"></span>
+        طباعة مباشرة
+    </button>
+</div>
         </div>
 
         <!-- Add Staff Section -->
@@ -592,12 +594,47 @@
         }
 
 <script>
-// دالة تصدير PDF معدلة بالكامل
 async function generatePDF() {
-    // عرض مؤشر التحميل
-    document.getElementById('pdfLoading').style.display = 'flex';
-    
-    // تعريف الخطوط العربية
+    // 1. إنشاء واجهة التحميل
+    const loadingDiv = document.createElement('div');
+    loadingDiv.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial;
+        ">
+            <div style="
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                text-align: center;
+                box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            ">
+                <h3 style="color: #2563eb;">جاري إنشاء الملف...</h3>
+                <p>الرجاء الانتظار</p>
+                <div style="
+                    margin: 20px auto;
+                    border: 5px solid #f3f3f3;
+                    border-top: 5px solid #2563eb;
+                    border-radius: 50%;
+                    width: 50px;
+                    height: 50px;
+                    animation: spin 1s linear infinite;
+                "></div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(loadingDiv);
+
+    // 2. تعريف الخط العربي
     pdfMake.fonts = {
         Amiri: {
             normal: 'https://cdn.jsdelivr.net/gh/arabic-fonts/amiri-font@1.0.0/Amiri-Regular.ttf',
@@ -605,47 +642,54 @@ async function generatePDF() {
         }
     };
 
-    // إعداد بيانات الجدول
-    const tableBody = [];
-    
-    // إضافة رأس الجدول
-    const headers = ['الموظف', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'حذف'];
-    tableBody.push(headers.map(header => ({ text: header, style: 'tableHeader', alignment: 'center' })));
-    
-    // إضافة بيانات الموظفين
-    staff.forEach(person => {
-        const row = [
-            { text: `${person.title}/${person.name}`, style: 'nameCell' },
+    // 3. إعداد بيانات الجدول
+    const tableData = staff.map(person => {
+        return [
+            { text: `${person.title}/${person.name}`, style: 'nameStyle' },
             ...days.map(day => ({
-                text: schedule[person.id] ? schedule[person.id][day] : 'عمل',
-                style: schedule[person.id] && schedule[person.id][day] === 'اجازة' ? 'holidayCell' : 'workCell',
-                alignment: 'center'
-            })),
-            { text: '', style: 'emptyCell' }
+                text: schedule[person.id][day],
+                style: schedule[person.id][day] === 'اجازة' ? 'holidayStyle' : 'workStyle'
+            }))
         ];
-        tableBody.push(row);
     });
 
-    // تعريف مستند PDF
+    // 4. إعداد تاريخ الطباعة
+    let printDate = '';
+    if (document.getElementById('includeDatePrint').checked) {
+        printDate = {
+            text: 'تاريخ الطباعة: ' + new Date().toLocaleDateString('ar-EG'),
+            style: 'dateStyle',
+            margin: [0, 0, 0, 10]
+        };
+    }
+
+    // 5. تعريف مستند PDF
     const docDefinition = {
         pageOrientation: 'landscape',
         content: [
-            { 
-                text: 'جدول عمل الموظفين\nStaff Schedule', 
-                style: 'header',
-                alignment: 'center',
-                margin: [0, 0, 0, 10]
-            },
+            { text: 'جدول عمل الموظفين', style: 'header' },
+            { text: 'Staff Schedule', style: 'subheader' },
+            printDate,
             {
                 table: {
                     headerRows: 1,
-                    widths: ['auto', '*', '*', '*', '*', '*', '*', '*', 20],
-                    body: tableBody
+                    widths: ['auto', '*', '*', '*', '*', '*', '*', '*'],
+                    body: [
+                        [
+                            { text: 'الموظف', style: 'tableHeader' },
+                            { text: 'الأحد', style: 'tableHeader' },
+                            { text: 'الإثنين', style: 'tableHeader' },
+                            { text: 'الثلاثاء', style: 'tableHeader' },
+                            { text: 'الأربعاء', style: 'tableHeader' },
+                            { text: 'الخميس', style: 'tableHeader' },
+                            { text: 'الجمعة', style: 'tableHeader' },
+                            { text: 'السبت', style: 'tableHeader' }
+                        ],
+                        ...tableData
+                    ]
                 },
                 layout: {
-                    fillColor: function(rowIndex) {
-                        return (rowIndex === 0) ? '#f9fafb' : (rowIndex % 2 === 0) ? '#f9fafb' : null;
-                    }
+                    fillColor: (rowIndex) => (rowIndex % 2 === 0) ? '#f8f9fa' : null
                 }
             }
         ],
@@ -653,30 +697,46 @@ async function generatePDF() {
             header: {
                 fontSize: 18,
                 bold: true,
+                alignment: 'center',
+                margin: [0, 0, 0, 10],
+                font: 'Amiri'
+            },
+            subheader: {
+                fontSize: 14,
+                alignment: 'center',
+                margin: [0, 0, 0, 20],
+                font: 'Amiri'
+            },
+            dateStyle: {
+                fontSize: 12,
+                alignment: 'center',
                 font: 'Amiri'
             },
             tableHeader: {
                 bold: true,
                 fontSize: 12,
-                color: '#374151',
+                alignment: 'center',
+                fillColor: '#e9ecef',
                 font: 'Amiri'
             },
-            nameCell: {
+            nameStyle: {
                 font: 'Amiri',
+                fontSize: 12,
                 alignment: 'right'
             },
-            workCell: {
+            workStyle: {
                 font: 'Amiri',
-                color: '#166534',
-                backgroundColor: '#dcfce7'
+                fontSize: 12,
+                alignment: 'center',
+                fillColor: '#dcfce7',
+                color: '#166534'
             },
-            holidayCell: {
+            holidayStyle: {
                 font: 'Amiri',
-                color: '#991b1b',
-                backgroundColor: '#fee2e2'
-            },
-            emptyCell: {
-                font: 'Amiri'
+                fontSize: 12,
+                alignment: 'center',
+                fillColor: '#fee2e2',
+                color: '#991b1b'
             }
         },
         defaultStyle: {
@@ -685,16 +745,33 @@ async function generatePDF() {
         }
     };
 
-    // إنشاء و تحميل PDF
+    // 6. إنشاء وتنزيل الملف
     try {
-        pdfMake.createPdf(docDefinition).download('جدول-الموظفين.pdf');
+        await new Promise((resolve) => {
+            pdfMake.createPdf(docDefinition).download('جدول-الموظفين.pdf', null, {
+                progressCallback: (progress) => {
+                    if (progress === 1) resolve();
+                }
+            });
+        });
     } catch (error) {
-        console.error('Error generating PDF:', error);
-        alert('حدث خطأ أثناء إنشاء ملف PDF. الرجاء المحاولة مرة أخرى.');
+        console.error('Error:', error);
+        alert('حدث خطأ أثناء التصدير. الرجاء المحاولة مرة أخرى.');
     } finally {
-        document.getElementById('pdfLoading').style.display = 'none';
+        document.body.removeChild(loadingDiv);
     }
 }
+
+// أضف هذه الأنيميشن في CSS
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+`;
+document.head.appendChild(style);
+        
         // Print function
         function printTable() {
             // Set print date if checkbox is checked
