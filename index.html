@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جدول عمل الموظفين</title>
+    <!-- jsPDF Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9fafb;
+            min-height: 100vh;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 100%;
+            padding: 16px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #1f2937;
+            font-size: 24px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .add-section {
+            background: #dbeafe;
+            border: 1px solid #93c5fd;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .add-section h2 {
+            color: #1e3a8a;
+            font-size: 18px;
+            margin-bottom: 16px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+            padding: 6px;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #15803d;
+        }
+
+        .schedule-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 8px;
+            text-align: center;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+            font-size: 14px;
+        }
+
+        .name-cell {
+            text-align: right;
+            min-width: 150px;
+        }
+
+        .staff-name {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .staff-name:hover {
+            background: #f3f4f6;
+        }
+
+        .status-btn {
+            padding: 4px 12px;
+            border: 1px solid;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            min-width: 60px;
+            transition: all 0.2s;
+        }
+
+        .status-work {
+            background: #dcfce7;
+            color: #166534;
+            border-color: #bbf7d0;
+        }
+
+        .status-holiday {
+            background: #fee2e2;
+            color: #991b1b;
+            border-color: #fecaca;
+        }
+
+        .status-btn:hover {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .summary {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .summary h3 {
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            font-size: 14px;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .dot-green { background: #22c55e; }
+        .dot-red { background: #ef4444; }
+
+        tbody tr:nth-child(even) {
+            background: #f9fafb;
+        }
+
+        .edit-input {
+            padding: 4px 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+            width: 100%;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .container {
+                padding: 8px;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .form-group {
+                min-width: auto;
+            }
+
+            th, td {
+                padding: 6px 4px;
+                font-size: 12px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .day-header {
+                writing-mode: vertical-rl;
+                text-orientation: mixed;
+                min-width: 40px;
+            }
+
+            .status-btn {
+                min-width: 30px;
+                padding: 2px 6px;
+            }
+
+            .name-cell {
+                min-width: 120px;
+            }
+        }
+
+        /* Icons using Unicode */
+        .icon-calendar::before { content: "📅"; }
+        .icon-users::before { content: "👥"; }
+        .icon-plus::before { content: "➕"; }
+        .icon-minus::before { content: "➖"; }
+        .icon-edit::before { content: "✏️"; }
+        .icon-print::before { content: "🖨️"; }
+
+        /* Print styles */
+        .print-section {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .print-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .print-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .print-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        @media print {
+            body { 
+                background: white; 
+                font-size: 12px;
+            }
+            .no-print { 
+                display: none !important; 
+            }
+            .print-only {
+                display: block !important;
+            }
+            .schedule-table {
+                box-shadow: none;
+                border: 1px solid #000;
+            }
+            th, td {
+                border: 1px solid #000 !important;
+                padding: 8px 4px;
+            }
+        }
+
+        .print-only {
+            display: none;
+        }
+
+        /* PDF Loading Indicator */
+        .pdf-loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .pdf-loading-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .pdf-loading-spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1><span class="icon-calendar"></span> جدول عمل الموظفين</h1>
+            <p>إدارة جداول العمل والإجازات للموظفين</p>
+            <div class="print-only">
+                <p>تاريخ الطباعة: <span id="printDate"></span></p>
+            </div>
+        </div>
+
+        <!-- Print Section -->
+        <div class="print-section no-print">
+            <h2><span class="icon-print"></span> طباعة الجدول</h2>
+            <div class="print-options">
+                <div class="print-option">
+                    <input type="checkbox" id="includeDatePrint" checked>
+                    <label for="includeDatePrint">إضافة تاريخ الطباعة</label>
+                </div>
+                <div class="print-option">
+                    <input type="checkbox" id="includeHolidaysOnly">
+                    <label for="includeHolidaysOnly">عرض الإجازات فقط</label>
+                </div>
+            </div>
+            <div class="print-buttons">
+                <button class="btn btn-success" onclick="generatePDF()">
+                    <span class="icon-print"></span>
+                    تحميل PDF
+                </button>
+                <button class="btn btn-primary" onclick="printTable()">
+                    <span class="icon-print"></span>
+                    طباعة مباشرة
+                </button>
+            </div>
+        </div>
+
+        <!-- Add Staff Section -->
+        <div class="add-section">
+            <h2><span class="icon-users"></span> إضافة موظف جديد</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>اسم الموظف</label>
+                    <input type="text" id="newStaffName" placeholder="أدخل اسم الموظف">
+                </div>
+                <div class="form-group" style="flex: 0 0 100px;">
+                    <label>المسمى</label>
+                    <select id="newStaffTitle">
+                        <option value="د">د</option>
+                        <option value="ا">ا</option>
+                        <option value="ة">ة</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="addStaff()">
+                    <span class="icon-plus"></span>
+                    إضافة
+                </button>
+            </div>
+        </div>
+
+        <!-- Schedule Table -->
+        <div class="schedule-table">
+            <div class="table-container">
+                <table id="scheduleTable">
+                    <thead>
+                        <tr>
+                            <th class="name-cell">الموظف</th>
+                            <th class="day-header">الأحد</th>
+                            <th class="day-header">الإثنين</th>
+                            <th class="day-header">الثلاثاء</th>
+                            <th class="day-header">الأربعاء</th>
+                            <th class="day-header">الخميس</th>
+                            <th class="day-header">الجمعة</th>
+                            <th class="day-header">السبت</th>
+                            <th style="width: 50px;">حذف</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scheduleBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="summary">
+            <h3>ملخص:</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="color-dot dot-green"></div>
+                    <span>عمل - انقر لتغيير إلى إجازة</span>
+                </div>
+                <div class="summary-item">
+                    <div class="color-dot dot-red"></div>
+                    <span>إجازة - انقر لتغيير إلى عمل</span>
+                </div>
+                <div class="summary-item">
+                    <span class="icon-edit"></span>
+                    <span>انقر على اسم الموظف لتعديله</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF Loading Indicator (hidden by default) -->
+    <div id="pdfLoading" class="pdf-loading" style="display: none;">
+        <div class="pdf-loading-content">
+            <div class="pdf-loading-spinner"></div>
+            <h3>جاري إنشاء ملف PDF...</h3>
+            <p>الرجاء الانتظار</p>
+        </div>
+    </div>
+
+    <script>
+        // Initial staff data
+        let staff = [
+            { id: 1, name: 'عادل', title: 'د' },
+            { id: 2, name: 'ناهد', title: 'د' },
+            { id: 3, name: 'جعفر', title: 'د' },
+            { id: 4, name: 'يوسف', title: 'ة' },
+            { id: 5, name: 'عاطف', title: 'ة' },
+            { id: 6, name: 'محمد حسن', title: 'ا' },
+            { id: 7, name: 'شماء', title: 'د' },
+            { id: 8, name: 'صفاء', title: 'د' },
+            { id: 9, name: 'شهد', title: 'د' },
+            { id: 10, name: 'آلاء', title: 'د' },
+            { id: 11, name: 'عمر', title: 'ا' },
+            { id: 12, name: 'محمد', title: 'د' },
+            { id: 13, name: 'حسام', title: 'ا' }
+        ];
+
+        let schedule = {};
+        const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+
+        // Initialize schedule
+        function initSchedule() {
+            staff.forEach(person => {
+                schedule[person.id] = {
+                    'الأحد': 'عمل',
+                    'الإثنين': 'عمل',
+                    'الثلاثاء': 'عمل',
+                    'الأربعاء': 'عمل',
+                    'الخميس': 'عمل',
+                    'الجمعة': 'عمل',
+                    'السبت': 'اجازة'
+                };
+            });
+            renderTable();
+        }
+
+        // Add new staff
+        function addStaff() {
+            const nameInput = document.getElementById('newStaffName');
+            const titleSelect = document.getElementById('newStaffTitle');
+            
+            if (nameInput.value.trim()) {
+                const newId = Math.max(...staff.map(s => s.id), 0) + 1;
+                const newPerson = {
+                    id: newId,
+                    name: nameInput.value.trim(),
+                    title: titleSelect.value
+                };
+                
+                staff.push(newPerson);
+                
+                // Initialize schedule for new staff
+                schedule[newId] = {
+                    'الأحد': 'عمل',
+                    'الإثنين': 'عمل',
+                    'الثلاثاء': 'عمل',
+                    'الأربعاء': 'عمل',
+                    'الخميس': 'عمل',
+                    'الجمعة': 'عمل',
+                    'السبت': 'اجازة'
+                };
+                
+                nameInput.value = '';
+                renderTable();
+            }
+        }
+
+        // Remove staff
+        function removeStaff(id) {
+            staff = staff.filter(person => person.id !== id);
+            delete schedule[id];
+            renderTable();
+        }
+
+        // Toggle schedule status
+        function toggleSchedule(staffId, day) {
+            if (schedule[staffId] && schedule[staffId][day]) {
+                schedule[staffId][day] = schedule[staffId][day] === 'عمل' ? 'اجازة' : 'عمل';
+                renderTable();
+            }
+        }
+
+        // Edit staff name
+        function editStaffName(id, currentName) {
+            const newName = prompt('تعديل اسم الموظف:', currentName);
+            if (newName && newName.trim() !== currentName) {
+                const staffMember = staff.find(person => person.id === id);
+                if (staffMember) {
+                    staffMember.name = newName.trim();
+                    renderTable();
+                }
+            }
+        }
+
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('scheduleBody');
+            tbody.innerHTML = '';
+
+            staff.forEach((person, index) => {
+                const row = document.createElement('tr');
+                
+                // Staff name cell
+                const nameCell = document.createElement('td');
+                nameCell.className = 'name-cell';
+                nameCell.innerHTML = `
+                    <div class="staff-name" onclick="editStaffName(${person.id}, '${person.name}')">
+                        <span>${person.title}/${person.name}</span>
+                        <span class="icon-edit" style="font-size: 10px;"></span>
+                    </div>
+                `;
+                row.appendChild(nameCell);
+
+                // Day cells
+                days.forEach(day => {
+                    const dayCell = document.createElement('td');
+                    const status = schedule[person.id] ? schedule[person.id][day] : 'عمل';
+                    const statusClass = status === 'عمل' ? 'status-work' : 'status-holiday';
+                    
+                    dayCell.innerHTML = `
+                        <button class="status-btn ${statusClass}" onclick="toggleSchedule(${person.id}, '${day}')">
+                            ${status}
+                        </button>
+                    `;
+                    row.appendChild(dayCell);
+                });
+
+                // Remove button cell
+                const actionCell = document.createElement('td');
+                actionCell.innerHTML = `
+                    <button class="btn btn-danger" onclick="removeStaff(${person.id})" title="حذف الموظف">
+                        <span class="icon-minus"></span>
+                    </button>
+                `;
+                row.appendChild(actionCell);
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // Event listeners
+        document.getElementById('newStaffName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addStaff();
+            }
+        });
+
+        // Initialize app
+        initSchedule();
+
+        // Improved PDF generation function
+        function generatePDF() {
+            // Show loading indicator
+            document.getElementById('pdfLoading').style.display = 'flex';
+            
+            // Set print date if checkbox is checked
+            if (document.getElementById('includeDatePrint').checked) {
+                const now = new Date();
+                const printDate = now.toLocaleDateString('ar-EG', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                document.getElementById('printDate').textContent = printDate;
+            }
+
+            // Create a clone of the table for PDF generation
+            const tableClone = document.getElementById('scheduleTable').cloneNode(true);
+            tableClone.style.width = '100%';
+            tableClone.style.fontSize = '12px';
+            document.body.appendChild(tableClone);
+            
+            // Use html2canvas to capture the table
+            html2canvas(tableClone, {
+                scale: 2,
+                logging: false,
+                useCORS: true,
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: tableClone.scrollWidth,
+                windowHeight: tableClone.scrollHeight
+            }).then(canvas => {
+                // Remove the cloned table
+                document.body.removeChild(tableClone);
+                
+                // Create PDF
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'landscape',
+                    unit: 'mm',
+                    format: 'a4'
+                });
+                
+                // Add title and date
+                pdf.setFont('helvetica');
+                pdf.setFontSize(16);
+                pdf.text('جدول عمل الموظفين - Staff Schedule', 20, 20);
+                
+                if (document.getElementById('includeDatePrint').checked) {
+                    pdf.setFontSize(12);
+                    const printDate = document.getElementById('printDate').textContent;
+                    pdf.text('تاريخ الطباعة: ' + printDate, 20, 30);
+                }
+                
+                // Add the table image to PDF
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                const pdfWidth = pdf.internal.pageSize.getWidth() - 40;
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                // Position the image below the header
+                pdf.addImage(imgData, 'JPEG', 20, 40, pdfWidth, pdfHeight);
+                
+                // Save the PDF
+                pdf.save('staff-schedule.pdf');
+                
+                // Hide loading indicator
+                document.getElementById('pdfLoading').style.display = 'none';
+            }).catch(error => {
+                console.error('Error generating PDF:', error);
+                document.getElementById('pdfLoading').style.display = 'none';
+                alert('حدث خطأ أثناء إنشاء ملف PDF. الرجاء المحاولة مرة أخرى.');
+            });
+        }
+
+        // Print function
+        function printTable() {
+            // Set print date if checkbox is checked
+            if (document.getElementById('includeDatePrint').checked) {
+                const now = new Date();
+                const printDate = now.toLocaleDateString('ar-EG', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                document.getElementById('printDate').textContent = printDate;
+            }
+
+            // Print the page
+            window.print();
+        }
+    </script>
+</body>
+</html>
