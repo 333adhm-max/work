@@ -647,78 +647,82 @@
 
         // Improved PDF generation function
         function generatePDF() {
-            // Show loading indicator
-            document.getElementById('pdfLoading').style.display = 'flex';
-            
-            // Set print date if checkbox is checked
-            if (document.getElementById('includeDatePrint').checked) {
-                const now = new Date();
-                const printDate = now.toLocaleDateString('ar-EG', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-                document.getElementById('printDate').textContent = printDate;
-            }
+    // عرض مؤشر التحميل
+    document.getElementById('pdfLoading').style.display = 'flex';
+    
+    // إعداد تاريخ الطباعة إذا كان مفعلاً
+    if (document.getElementById('includeDatePrint').checked) {
+        const now = new Date();
+        const printDate = now.toLocaleDateString('ar-EG', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        document.getElementById('printDate').textContent = printDate;
+    }
 
-            // Create a clone of the table for PDF generation
-            const tableClone = document.getElementById('scheduleTable').cloneNode(true);
-            tableClone.style.width = '100%';
-            tableClone.style.fontSize = '12px';
-            document.body.appendChild(tableClone);
-            
-            // Use html2canvas to capture the table
-            html2canvas(tableClone, {
-                scale: 2,
-                logging: false,
-                useCORS: true,
-                scrollX: 0,
-                scrollY: 0,
-                windowWidth: tableClone.scrollWidth,
-                windowHeight: tableClone.scrollHeight
-            }).then(canvas => {
-                // Remove the cloned table
-                document.body.removeChild(tableClone);
-                
-                // Create PDF
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF({
-                    orientation: 'landscape',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-                
-                // Add title and date
-                pdf.setFont('helvetica');
-                pdf.setFontSize(16);
-                pdf.text('جدول عمل الموظفين - Staff Schedule', 20, 20);
-                
-                if (document.getElementById('includeDatePrint').checked) {
-                    pdf.setFontSize(12);
-                    const printDate = document.getElementById('printDate').textContent;
-                    pdf.text('تاريخ الطباعة: ' + printDate, 20, 30);
-                }
-                
-                // Add the table image to PDF
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                const pdfWidth = pdf.internal.pageSize.getWidth() - 40;
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                
-                // Position the image below the header
-                pdf.addImage(imgData, 'JPEG', 20, 40, pdfWidth, pdfHeight);
-                
-                // Save the PDF
-                pdf.save('staff-schedule.pdf');
-                
-                // Hide loading indicator
-                document.getElementById('pdfLoading').style.display = 'none';
-            }).catch(error => {
-                console.error('Error generating PDF:', error);
-                document.getElementById('pdfLoading').style.display = 'none';
-                alert('حدث خطأ أثناء إنشاء ملف PDF. الرجاء المحاولة مرة أخرى.');
-            });
+    // إنشاء نسخة من الجدول للتصدير
+    const tableClone = document.getElementById('scheduleTable').cloneNode(true);
+    tableClone.style.width = '100%';
+    tableClone.style.fontFamily = "'Traditional Arabic', Arial, sans-serif";
+    tableClone.style.direction = 'rtl';
+    document.body.appendChild(tableClone);
+    
+    // استخدام html2canvas مع إعدادات محسنة
+    html2canvas(tableClone, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        allowTaint: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: tableClone.scrollWidth,
+        windowHeight: tableClone.scrollHeight
+    }).then(canvas => {
+        // إزالة النسخة المؤقتة
+        document.body.removeChild(tableClone);
+        
+        // إنشاء PDF
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+        });
+        
+        // إضافة الخط العربي (مطلوب لبعض المتصفحات)
+        pdf.addFont('https://fonts.googleapis.com/css2?family=Amiri&display=swap', 'Amiri', 'normal');
+        
+        // إضافة العنوان والتاريخ
+        pdf.setFont('Amiri');
+        pdf.setFontSize(16);
+        pdf.text('جدول عمل الموظفين - Staff Schedule', 105, 20, { align: 'center' });
+        
+        if (document.getElementById('includeDatePrint').checked) {
+            pdf.setFontSize(12);
+            const printDate = document.getElementById('printDate').textContent;
+            pdf.text('تاريخ الطباعة: ' + printDate, 105, 30, { align: 'center' });
         }
-
+        
+        // إضافة صورة الجدول إلى PDF
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const pdfWidth = pdf.internal.pageSize.getWidth() - 40;
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        // وضع الصورة في منتصف الصفحة
+        pdf.addImage(imgData, 'JPEG', 20, 40, pdfWidth, pdfHeight);
+        
+        // حفظ الملف
+        pdf.save('جدول-الموظفين.pdf');
+        
+        // إخفاء مؤشر التحميل
+        document.getElementById('pdfLoading').style.display = 'none';
+    }).catch(error => {
+        console.error('Error generating PDF:', error);
+        document.getElementById('pdfLoading').style.display = 'none';
+        alert('حدث خطأ أثناء إنشاء ملف PDF. الرجاء المحاولة مرة أخرى.');
+    });
+}
         // Print function
         function printTable() {
             // Set print date if checkbox is checked
