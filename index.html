@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>جدول عمل الموظفين</title>
-    <!-- مكتبات pdfMake -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <title>جدول العمل الأسبوعي</title>
     <style>
         * {
             margin: 0;
@@ -15,790 +12,398 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f9fafb;
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 10px;
             direction: rtl;
         }
 
         .container {
             max-width: 100%;
-            padding: 16px;
-            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
 
         .header {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+            background: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: center;
         }
 
         .header h1 {
-            color: #1f2937;
-            font-size: 24px;
-            margin-bottom: 8px;
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .controls {
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .input-row {
             display: flex;
-            align-items: center;
             gap: 8px;
-        }
-
-        .header p {
-            color: #6b7280;
-            font-size: 14px;
-        }
-
-        .add-section {
-            background: #dbeafe;
-            border: 1px solid #93c5fd;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .add-section h2 {
-            color: #1e3a8a;
-            font-size: 18px;
-            margin-bottom: 16px;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 12px;
             flex-wrap: wrap;
+            align-items: center;
         }
 
-        .form-group {
+        input[type="text"] {
             flex: 1;
             min-width: 200px;
-        }
-
-        .form-group label {
-            display: block;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
             font-size: 14px;
-            font-weight: 500;
-            color: #374151;
-            margin-bottom: 4px;
         }
 
-        .form-group input,
-        .form-group select {
-            width: 100%;
+        button {
             padding: 8px 12px;
-            border: 1px solid #d1d5db;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-
-        .btn {
-            padding: 10px 16px;
             border: none;
-            border-radius: 6px;
+            border-radius: 5px;
             cursor: pointer;
             font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
+            font-weight: bold;
         }
 
-        .btn-primary {
-            background: #2563eb;
+        .btn-add {
+            background: #28a745;
             color: white;
         }
 
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
-
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-            padding: 6px;
-        }
-
-        .btn-success {
-            background: #16a34a;
+        .btn-pdf {
+            background: #dc3545;
             color: white;
         }
 
-        .btn-success:hover {
-            background: #15803d;
-        }
-
-        .schedule-table {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
         }
 
         .table-container {
+            padding: 15px;
             overflow-x: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 600px;
         }
 
         th, td {
-            padding: 12px 8px;
+            border: 1px solid #ddd;
+            padding: 6px 4px;
             text-align: center;
-            border-bottom: 1px solid #e5e7eb;
+            font-size: 12px;
         }
 
         th {
-            background: #f9fafb;
-            font-weight: 600;
-            color: #374151;
-            font-size: 14px;
+            background: #007bff;
+            color: white;
+            font-weight: bold;
         }
 
-        .name-cell {
-            text-align: right;
-            min-width: 150px;
+        .employee-name {
+            background: #e9ecef;
+            font-weight: bold;
+            min-width: 80px;
         }
 
-        .staff-name {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            padding: 4px 8px;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-
-        .staff-name:hover {
-            background: #f3f4f6;
-        }
-
-        .status-btn {
-            padding: 4px 12px;
-            border: 1px solid;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-            min-width: 60px;
-            transition: all 0.2s;
-        }
-
-        .status-work {
-            background: #dcfce7;
-            color: #166534;
-            border-color: #bbf7d0;
-        }
-
-        .status-holiday {
-            background: #fee2e2;
-            color: #991b1b;
-            border-color: #fecaca;
-        }
-
-        .status-btn:hover {
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .summary {
-            background: #f9fafb;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 16px;
-        }
-
-        .summary h3 {
-            color: #1f2937;
-            margin-bottom: 12px;
-        }
-
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            font-size: 14px;
-        }
-
-        .summary-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .color-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-        }
-
-        .dot-green { background: #22c55e; }
-        .dot-red { background: #ef4444; }
-
-        tbody tr:nth-child(even) {
-            background: #f9fafb;
-        }
-
-        .edit-input {
-            padding: 4px 8px;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
-            font-size: 12px;
+        select {
             width: 100%;
+            padding: 3px;
+            border: none;
+            border-radius: 3px;
+            font-size: 11px;
+            cursor: pointer;
         }
 
-        /* Mobile responsiveness */
-        @media (max-width: 768px) {
-            .container {
-                padding: 8px;
-            }
+        .work { background: #28a745; color: white; }
+        .holiday { background: #dc3545; color: white; }
+        .accessory { background: #6f42c1; color: white; }
 
-            .form-row {
-                flex-direction: column;
-            }
-
-            .form-group {
-                min-width: auto;
-            }
-
-            th, td {
-                padding: 6px 4px;
-                font-size: 12px;
-            }
-
-            .header h1 {
-                font-size: 20px;
-            }
-
-            .day-header {
-                writing-mode: vertical-rl;
-                text-orientation: mixed;
-                min-width: 40px;
-            }
-
-            .status-btn {
-                min-width: 30px;
-                padding: 2px 6px;
-            }
-
-            .name-cell {
-                min-width: 120px;
-            }
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
         }
 
-        /* Icons using Unicode */
-        .icon-calendar::before { content: "📅"; }
-        .icon-users::before { content: "👥"; }
-        .icon-plus::before { content: "➕"; }
-        .icon-minus::before { content: "➖"; }
-        .icon-edit::before { content: "✏️"; }
-        .icon-print::before { content: "🖨️"; }
-
-        /* Print styles */
-        .print-section {
-            background: white;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .print-options {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        .print-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .print-buttons {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        @media print {
-            body { 
-                background: white; 
-                font-size: 12px;
-            }
-            .no-print { 
-                display: none !important; 
-            }
-            .print-only {
-                display: block !important;
-            }
-            .schedule-table {
-                box-shadow: none;
-                border: 1px solid #000;
-            }
-            th, td {
-                border: 1px solid #000 !important;
-                padding: 8px 4px;
-            }
-        }
-
-        .print-only {
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: white;
+            z-index: 1000;
             display: none;
         }
 
-        /* Loading Animation */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .toast.success { background: #28a745; }
+        .toast.error { background: #dc3545; }
+
+        @media (max-width: 600px) {
+            .input-row {
+                flex-direction: column;
+            }
+            
+            input[type="text"] {
+                min-width: 100%;
+                margin-bottom: 5px;
+            }
+            
+            th, td {
+                padding: 4px 2px;
+                font-size: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
         <div class="header">
-            <h1><span class="icon-calendar"></span> جدول عمل الموظفين</h1>
-            <p>إدارة جداول العمل والإجازات للموظفين</p>
-            <div class="print-only">
-                <p>تاريخ الطباعة: <span id="printDate"></span></p>
+            <h1>📅 جدول العمل الأسبوعي</h1>
+            <p>إدارة جداول الموظفين</p>
+        </div>
+
+        <div class="controls">
+            <div class="input-row">
+                <input type="text" id="employeeName" placeholder="اسم الموظف الجديد">
+                <button class="btn-add" onclick="addEmployee()">➕ إضافة موظف</button>
+                <button class="btn-pdf" onclick="exportToPDF()">📄 تصدير PDF</button>
             </div>
         </div>
 
-        <!-- Print Section -->
-        <div class="print-section no-print">
-            <h2><span class="icon-print"></span> طباعة الجدول</h2>
-            <div class="print-options">
-                <div class="print-option">
-                    <input type="checkbox" id="includeDatePrint" checked>
-                    <label for="includeDatePrint">إضافة تاريخ الطباعة</label>
-                </div>
-                <div class="print-option">
-                    <input type="checkbox" id="includeHolidaysOnly">
-                    <label for="includeHolidaysOnly">عرض الإجازات فقط</label>
-                </div>
-            </div>
-            <div class="print-buttons">
-                <button class="btn btn-success" onclick="generatePDF()">
-                    <span class="icon-print"></span>
-                    تحميل PDF
-                </button>
-                <button class="btn btn-primary" onclick="printTable()">
-                    <span class="icon-print"></span>
-                    طباعة مباشرة
-                </button>
-            </div>
-        </div>
+        <div class="table-container">
+            <table id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th>الموظف</th>
+                        <th>السبت</th>
+                        <th>الأحد</th>
+                        <th>الاثنين</th>
+                        <th>الثلاثاء</th>
+                        <th>الأربعاء</th>
+                        <th>الخميس</th>
+                        <th>الجمعة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="employeeList">
+                </tbody>
+            </table>
 
-        <!-- Add Staff Section -->
-        <div class="add-section">
-            <h2><span class="icon-users"></span> إضافة موظف جديد</h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>اسم الموظف</label>
-                    <input type="text" id="newStaffName" placeholder="أدخل اسم الموظف">
-                </div>
-                <div class="form-group" style="flex: 0 0 100px;">
-                    <label>المسمى</label>
-                    <select id="newStaffTitle">
-                        <option value="د">د</option>
-                        <option value="ا">ا</option>
-                    </select>
-                </div>
-                <button class="btn btn-primary" onclick="addStaff()">
-                    <span class="icon-plus"></span>
-                    إضافة
-                </button>
-            </div>
-        </div>
-
-        <!-- Schedule Table -->
-        <div class="schedule-table">
-            <div class="table-container">
-                <table id="scheduleTable">
-                    <thead>
-                        <tr>
-                            <th class="name-cell">الموظف</th>
-                            <th class="day-header">الأحد</th>
-                            <th class="day-header">الإثنين</th>
-                            <th class="day-header">الثلاثاء</th>
-                            <th class="day-header">الأربعاء</th>
-                            <th class="day-header">الخميس</th>
-                            <th class="day-header">الجمعة</th>
-                            <th class="day-header">السبت</th>
-                            <th style="width: 50px;">حذف</th>
-                        </tr>
-                    </thead>
-                    <tbody id="scheduleBody">
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Summary -->
-        <div class="summary">
-            <h3>ملخص:</h3>
-            <div class="summary-grid">
-                <div class="summary-item">
-                    <div class="color-dot dot-green"></div>
-                    <span>عمل - انقر لتغيير إلى إجازة</span>
-                </div>
-                <div class="summary-item">
-                    <div class="color-dot dot-red"></div>
-                    <span>إجازة - انقر لتغيير إلى عمل</span>
-                </div>
-                <div class="summary-item">
-                    <span class="icon-edit"></span>
-                    <span>انقر على اسم الموظف لتعديله</span>
-                </div>
+            <div id="emptyMessage" class="empty-message" style="display: none;">
+                <h3>لا يوجد موظفين</h3>
+                <p>قم بإضافة موظف جديد للبدء</p>
             </div>
         </div>
     </div>
 
+    <div id="toast" class="toast"></div>
+
     <script>
-        // Initial staff data
-        let staff = [
-            { id: 1, name: 'عادل', title: 'د' },
-            { id: 2, name: 'ناهد', title: 'د' },
-            { id: 3, name: 'جعفر', title: 'د' },
-            { id: 4, name: 'يوسف', title: 'ا' },
-            { id: 5, name: 'عاطف', title: 'ا' },
-            { id: 6, name: 'محمد حسن', title: 'ا' },
-            { id: 7, name: 'شماء', title: 'د' },
-            { id: 8, name: 'صفاء', title: 'د' },
-            { id: 9, name: 'شهد', title: 'د' },
-            { id: 10, name: 'آلاء', title: 'د' },
-            { id: 11, name: 'عمر', title: 'ا' },
-            { id: 12, name: 'محمد', title: 'د' },
-            { id: 13, name: 'حسام', title: 'ا' }
+        var employees = [
+            { name: 'داليا/د', schedule: ['عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'نايد/د', schedule: ['عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'فتح/د', schedule: ['اجازة', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'محمد حسن/ا', schedule: ['اجازة', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'شيماء/د', schedule: ['اجازة', 'اجازة', 'اجازة', 'اجازة', 'عمل', 'عمل', 'عمل'] },
+            { name: 'صفاء/د', schedule: ['اجازة', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'شهد/د', schedule: ['عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'آلاء/د', schedule: ['عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'عمر/ا', schedule: ['اكسسوار', 'اكسسوار', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'محمد/د', schedule: ['عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'حسام/ا', schedule: ['اكسسوار', 'اكسسوار', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] }
         ];
 
-        let schedule = {};
-        const days = ['الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-
-        // Initialize schedule
-        function initSchedule() {
-            staff.forEach(person => {
-                schedule[person.id] = {
-                    'الأحد': 'عمل',
-                    'الإثنين': 'عمل',
-                    'الثلاثاء': 'عمل',
-                    'الأربعاء': 'عمل',
-                    'الخميس': 'عمل',
-                    'الجمعة': 'عمل',
-                    'السبت': 'اجازة'
-                };
-            });
-            renderTable();
+        function getStatusClass(status) {
+            if (status === 'عمل') return 'work';
+            if (status === 'اجازة') return 'holiday';
+            if (status === 'اكسسوار') return 'accessory';
+            return '';
         }
 
-        // Add new staff
-        function addStaff() {
-            const nameInput = document.getElementById('newStaffName');
-            const titleSelect = document.getElementById('newStaffTitle');
+        function showToast(message, type) {
+            var toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            toast.style.display = 'block';
             
-            if (nameInput.value.trim()) {
-                const newId = Math.max(...staff.map(s => s.id), 0) + 1;
-                const newPerson = {
-                    id: newId,
-                    name: nameInput.value.trim(),
-                    title: titleSelect.value
-                };
-                
-                staff.push(newPerson);
-                
-                // Initialize schedule for new staff
-                schedule[newId] = {
-                    'الأحد': 'عمل',
-                    'الإثنين': 'عمل',
-                    'الثلاثاء': 'عمل',
-                    'الأربعاء': 'عمل',
-                    'الخميس': 'عمل',
-                    'الجمعة': 'عمل',
-                    'السبت': 'اجازة'
-                };
-                
-                nameInput.value = '';
-                renderTable();
-            }
+            setTimeout(function() {
+                toast.style.display = 'none';
+            }, 3000);
         }
 
-        // Remove staff
-        function removeStaff(id) {
-            staff = staff.filter(person => person.id !== id);
-            delete schedule[id];
-            renderTable();
-        }
-
-        // Toggle schedule status
-        function toggleSchedule(staffId, day) {
-            if (schedule[staffId] && schedule[staffId][day]) {
-                schedule[staffId][day] = schedule[staffId][day] === 'عمل' ? 'اجازة' : 'عمل';
-                renderTable();
-            }
-        }
-
-        // Edit staff name
-        function editStaffName(id, currentName) {
-            const newName = prompt('تعديل اسم الموظف:', currentName);
-            if (newName && newName.trim() !== currentName) {
-                const staffMember = staff.find(person => person.id === id);
-                if (staffMember) {
-                    staffMember.name = newName.trim();
-                    renderTable();
-                }
-            }
-        }
-
-        // Render table
         function renderTable() {
-            const tbody = document.getElementById('scheduleBody');
-            tbody.innerHTML = '';
-
-            staff.forEach((person, index) => {
-                const row = document.createElement('tr');
+            var tbody = document.getElementById('employeeList');
+            var emptyMessage = document.getElementById('emptyMessage');
+            
+            if (employees.length === 0) {
+                tbody.innerHTML = '';
+                emptyMessage.style.display = 'block';
+                return;
+            }
+            
+            emptyMessage.style.display = 'none';
+            var html = '';
+            
+            for (var i = 0; i < employees.length; i++) {
+                var emp = employees[i];
+                html += '<tr>';
+                html += '<td class="employee-name">' + emp.name + '</td>';
                 
-                // Staff name cell
-                const nameCell = document.createElement('td');
-                nameCell.className = 'name-cell';
-                nameCell.innerHTML = `
-                    <div class="staff-name" onclick="editStaffName(${person.id}, '${person.name}')">
-                        <span>${person.title}/${person.name}</span>
-                        <span class="icon-edit" style="font-size: 10px;"></span>
-                    </div>
-                `;
-                row.appendChild(nameCell);
-
-                // Day cells
-                days.forEach(day => {
-                    const dayCell = document.createElement('td');
-                    const status = schedule[person.id] ? schedule[person.id][day] : 'عمل';
-                    const statusClass = status === 'عمل' ? 'status-work' : 'status-holiday';
-                    
-                    dayCell.innerHTML = `
-                        <button class="status-btn ${statusClass}" onclick="toggleSchedule(${person.id}, '${day}')">
-                            ${status}
-                        </button>
-                    `;
-                    row.appendChild(dayCell);
-                });
-
-                // Remove button cell
-                const actionCell = document.createElement('td');
-                actionCell.innerHTML = `
-                    <button class="btn btn-danger" onclick="removeStaff(${person.id})" title="حذف الموظف">
-                        <span class="icon-minus"></span>
-                    </button>
-                `;
-                row.appendChild(actionCell);
-
-                tbody.appendChild(row);
-            });
+                for (var j = 0; j < 7; j++) {
+                    var status = emp.schedule[j];
+                    html += '<td>';
+                    html += '<select class="' + getStatusClass(status) + '" onchange="updateStatus(' + i + ', ' + j + ', this.value)">';
+                    html += '<option value="عمل"' + (status === 'عمل' ? ' selected' : '') + '>عمل</option>';
+                    html += '<option value="اجازة"' + (status === 'اجازة' ? ' selected' : '') + '>اجازة</option>';
+                    html += '<option value="اكسسوار"' + (status === 'اكسسوار' ? ' selected' : '') + '>اكسسوار</option>';
+                    html += '</select>';
+                    html += '</td>';
+                }
+                
+                html += '<td><button class="btn-delete" onclick="removeEmployee(' + i + ')">حذف</button></td>';
+                html += '</tr>';
+            }
+            
+            tbody.innerHTML = html;
         }
 
-        // Event listeners
-        document.getElementById('newStaffName').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                addStaff();
+        function addEmployee() {
+            var nameInput = document.getElementById('employeeName');
+            var name = nameInput.value.trim();
+            
+            if (name === '') {
+                showToast('يرجى إدخال اسم الموظف', 'error');
+                return;
             }
+            
+            for (var i = 0; i < employees.length; i++) {
+                if (employees[i].name === name) {
+                    showToast('الموظف موجود بالفعل', 'error');
+                    return;
+                }
+            }
+            
+            employees.push({
+                name: name,
+                schedule: ['عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل']
+            });
+            
+            nameInput.value = '';
+            renderTable();
+            showToast('تم إضافة الموظف بنجاح', 'success');
+        }
+
+        function removeEmployee(index) {
+            if (confirm('هل تريد حذف هذا الموظف؟')) {
+                employees.splice(index, 1);
+                renderTable();
+                showToast('تم حذف الموظف', 'success');
+            }
+        }
+
+        function updateStatus(empIndex, dayIndex, newStatus) {
+            employees[empIndex].schedule[dayIndex] = newStatus;
+            renderTable();
+        }
+
+        function exportToPDF() {
+            var printContent = generatePrintContent();
+            var printWindow = window.open('', '_blank');
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            setTimeout(function() {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+            
+            showToast('تم فتح نافذة الطباعة', 'success');
+        }
+
+        function generatePrintContent() {
+            var days = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+            var today = new Date().toLocaleDateString('ar-EG');
+            
+            var html = '<!DOCTYPE html>';
+            html += '<html dir="rtl">';
+            html += '<head>';
+            html += '<meta charset="UTF-8">';
+            html += '<title>جدول العمل الأسبوعي</title>';
+            html += '<style>';
+            html += 'body { font-family: Arial; direction: rtl; margin: 20px; }';
+            html += 'h1 { text-align: center; color: #333; margin-bottom: 10px; }';
+            html += '.date { text-align: center; color: #666; margin-bottom: 30px; }';
+            html += 'table { width: 100%; border-collapse: collapse; }';
+            html += 'th, td { border: 2px solid #333; padding: 8px; text-align: center; font-size: 14px; }';
+            html += 'th { background: #007bff; color: white; font-weight: bold; }';
+            html += '.employee { background: #f8f9fa; font-weight: bold; }';
+            html += '.work { background: #28a745; color: white; }';
+            html += '.holiday { background: #dc3545; color: white; }';
+            html += '.accessory { background: #6f42c1; color: white; }';
+            html += '.legend { margin-top: 20px; text-align: center; font-size: 12px; }';
+            html += '@media print { body { margin: 0; } }';
+            html += '</style>';
+            html += '</head>';
+            html += '<body>';
+            
+            html += '<h1>📅 جدول العمل الأسبوعي</h1>';
+            html += '<div class="date">تاريخ الطباعة: ' + today + '</div>';
+            
+            html += '<table>';
+            html += '<thead><tr>';
+            html += '<th>الموظف</th>';
+            for (var i = 0; i < days.length; i++) {
+                html += '<th>' + days[i] + '</th>';
+            }
+            html += '</tr></thead>';
+            
+            html += '<tbody>';
+            for (var i = 0; i < employees.length; i++) {
+                var emp = employees[i];
+                html += '<tr>';
+                html += '<td class="employee">' + emp.name + '</td>';
+                
+                for (var j = 0; j < emp.schedule.length; j++) {
+                    var status = emp.schedule[j];
+                    var cssClass = getStatusClass(status);
+                    html += '<td class="' + cssClass + '">' + status + '</td>';
+                }
+                html += '</tr>';
+            }
+            html += '</tbody>';
+            html += '</table>';
+            
+            html += '<div class="legend">';
+            html += '<p><strong>الألوان:</strong> العمل (أخضر) | الإجازة (أحمر) | الإكسسوار (بنفسجي)</p>';
+            html += '</div>';
+            
+            html += '</body>';
+            html += '</html>';
+            
+            return html;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTable();
+            
+            document.getElementById('employeeName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addEmployee();
+                }
+            });
         });
-
-        // Print function
-        function printTable() {
-            // Set print date if checkbox is checked
-            if (document.getElementById('includeDatePrint').checked) {
-                const now = new Date();
-                const printDate = now.toLocaleDateString('ar-EG', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                });
-                document.getElementById('printDate').textContent = printDate;
-            }
-
-            // Print the page
-            window.print();
-        }
-
-        // Generate PDF function
-        async function generatePDF() {
-            // Create loading screen
-            const loadingDiv = document.createElement('div');
-            loadingDiv.innerHTML = `
-                <div style="
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0,0,0,0.7);
-                    z-index: 9999;
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    font-family: Arial;
-                ">
-                    <div style="
-                        background: white;
-                        padding: 30px;
-                        border-radius: 10px;
-                        text-align: center;
-                        box-shadow: 0 0 20px rgba(0,0,0,0.3);
-                    ">
-                        <h3 style="color: #2563eb;">جاري إنشاء ملف PDF...</h3>
-                        <p>الرجاء الانتظار</p>
-                        <div style="
-                            margin: 20px auto;
-                            border: 5px solid #f3f3f3;
-                            border-top: 5px solid #2563eb;
-                            border-radius: 50%;
-                            width: 50px;
-                            height: 50px;
-                            animation: spin 1s linear infinite;
-                        "></div>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(loadingDiv);
-
-            // Define Arabic font
-            pdfMake.fonts = {
-                Amiri: {
-                    normal: 'https://cdn.jsdelivr.net/gh/arabic-fonts/amiri-font@1.0.0/Amiri-Regular.ttf',
-                    bold: 'https://cdn.jsdelivr.net/gh/arabic-fonts/amiri-font@1.0.0/Amiri-Bold.ttf',
-                }
-            };
-
-            // Prepare table data
-            const tableBody = [];
-            
-            // Add headers
-            const headers = ['الموظف', 'الأحد', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-            tableBody.push(headers.map(header => ({ 
-                text: header, 
-                style: 'tableHeader',
-                alignment: 'center'
-            })));
-            
-            // Add staff data
-            staff.forEach(person => {
-                const row = [
-                    { 
-                        text: `${person.title}/${person.name}`, 
-                        style: 'nameCell',
-                        alignment: 'right'
-                    },
-                    ...days.map(day => ({
-                        text: schedule[person.id] ? schedule[person.id][day] : 'عمل',
-                        style: schedule[person.id] && schedule[person.id][day] === 'اجازة' ? 'holidayCell' : 'workCell',
-                        alignment: 'center'
-                    }))
-                ];
-                tableBody.push(row);
-            });
-
-            // Prepare print date
-            let printDate = '';
-            if (document.getElementById('includeDatePrint').checked) {
-                const now = new Date();
-                printDate = {
-                    text: `تاريخ الطباعة: ${now.toLocaleDateString('ar-EG', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                    })}`,
-                    style: 'dateText',
-                    alignment: 'center',
-                    margin: [0, 0, 0, 10]
-                };
-            }
-
-            // Create PDF document
-            const docDefinition = {
-                pageOrientation: 'landscape',
-                content: [
-                    { 
-                        text: 'جدول عمل الموظفين\nStaff Schedule', 
-                        style: 'header',
-                        alignment: 'center',
-                        margin: [0, 0, 0, 10]
-                    },
-                    printDate,
-                    {
-                        table: {
-                            headerRows: 1,
-                            widths: ['auto', '*', '*', '*', '*', '*', '*', '*'],
-                            body: tableBody
-                        },
-                        layout: {
-                            fillColor: function(rowIndex) {
-                                return (rowIndex === 0) ? '#f8f9fa' : (rowIndex % 2 === 0) ? '#f8f9fa' : null;
-                            },
-                            hLineWidth: function(i, node) { return 0.5; },
-                            vLineWidth: function(i, node) { return 0.5; }
-                        }
-                    }
-                ],
-                styles: {
-                    header: {
-                        fontSize: 18,
-                        bold: true,
-                        font: 'Amiri'
-                    },
-                    dateText: {
-                        fontSize: 12,
-                        font: 'Amiri'
-                    },
-                    tableHeader: {
-                        bold: true,
-                        fontSize: 12,
-                        color: '#374151',
-                        font: 'Amiri'
-                    },
-                    nameCell: {
-                        font: 'Amiri',
-                        fontSize: 12
-                    },
-                    workCell: {
-                        font: 'Amiri',
-                        color: '#166534',
-                        backgroundColor: '#dcfce7',
-                        fontSize: 12
-                    },
-                    holidayCell: {
-                        font: 'Amiri',
-                        color: '#991b1b',
-                        backgroundColor: '#fee2e2',
-                        fontSize: 12
-                    }
-                },
-                defaultStyle: {
-                    font: 'Amiri',
-                    fontSize: 10
-                }
-            };
-
-            // Generate and download PDF
-            try {
-                await new Promise((resolve) => {
-                    pdfMake.createPdf(docDefinition).download('جدول-الموظفين.pdf', null, {
-                        progressCallback: (progress) => {
-                            if (progress === 1) resolve();
-                        }
-                    });
-                });
-            } catch (error) {
-                console.error('Error generating PDF:', error);
-                alert('حدث خطأ أثناء إنشاء ملف PDF. الرجاء المحاولة مرة أخرى.');
-            } finally {
-                document.body.removeChild(loadingDiv);
-            }
-        }
-
-        // Initialize app
-        initSchedule();
     </script>
 </body>
 </html>
