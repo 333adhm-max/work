@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جدول العمل الأسبوعي</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            padding: 10px;
+            direction: rtl;
+        }
+
+        .container {
+            max-width: 100%;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #007bff;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+        }
+
+        .controls {
+            padding: 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .btn-add {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-pdf {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            font-size: 12px;
+        }
+
+        .table-container {
+            padding: 15px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px 4px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        th {
+            background: #007bff;
+            color: white;
+            font-weight: bold;
+        }
+
+        .employee-name {
+            background: #e9ecef;
+            font-weight: bold;
+            min-width: 80px;
+        }
+
+        select {
+            width: 100%;
+            padding: 3px;
+            border: none;
+            border-radius: 3px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+
+        .work { background: #28a745; color: white; }
+        .holiday { background: #dc3545; color: white; }
+        .accessory { background: #6f42c1; color: white; }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: white;
+            z-index: 1000;
+            display: none;
+        }
+
+        .toast.success { background: #28a745; }
+        .toast.error { background: #dc3545; }
+
+        @media (max-width: 600px) {
+            .input-row {
+                flex-direction: column;
+            }
+            
+            input[type="text"] {
+                min-width: 100%;
+                margin-bottom: 5px;
+            }
+            
+            th, td {
+                padding: 4px 2px;
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📅 جدول العمل الأسبوعي</h1>
+            <p>إدارة جداول الموظفين</p>
+        </div>
+
+        <div class="controls">
+            <div class="input-row">
+                <input type="text" id="employeeName" placeholder="اسم الموظف الجديد">
+                <button class="btn-add" onclick="addEmployee()">➕ إضافة موظف</button>
+                <button class="btn-pdf" onclick="exportToPDF()">📄 تصدير PDF</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="scheduleTable">
+                <thead>
+                    <tr>
+                        <th>الموظف</th>
+                        <th>السبت</th>
+                        <th>الأحد</th>
+                        <th>الاثنين</th>
+                        <th>الثلاثاء</th>
+                        <th>الأربعاء</th>
+                        <th>الخميس</th>
+                        <th>الجمعة</th>
+                        <th>إجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="employeeList">
+                </tbody>
+            </table>
+
+            <div id="emptyMessage" class="empty-message" style="display: none;">
+                <h3>لا يوجد موظفين</h3>
+                <p>قم بإضافة موظف جديد للبدء</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        var employees = [
+            { name: 'داليا/د', schedule: ['عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'نايد/د', schedule: ['عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'فتح/د', schedule: ['اجازة', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'محمد حسن/ا', schedule: ['اجازة', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'شيماء/د', schedule: ['اجازة', 'اجازة', 'اجازة', 'اجازة', 'عمل', 'عمل', 'عمل'] },
+            { name: 'صفاء/د', schedule: ['اجازة', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'شهد/د', schedule: ['عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'آلاء/د', schedule: ['عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'عمر/ا', schedule: ['اكسسوار', 'اكسسوار', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'محمد/د', schedule: ['عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] },
+            { name: 'حسام/ا', schedule: ['اكسسوار', 'اكسسوار', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل'] }
+        ];
+
+        function getStatusClass(status) {
+            if (status === 'عمل') return 'work';
+            if (status === 'اجازة') return 'holiday';
+            if (status === 'اكسسوار') return 'accessory';
+            return '';
+        }
+
+        function showToast(message, type) {
+            var toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            toast.style.display = 'block';
+            
+            setTimeout(function() {
+                toast.style.display = 'none';
+            }, 3000);
+        }
+
+        function renderTable() {
+            var tbody = document.getElementById('employeeList');
+            var emptyMessage = document.getElementById('emptyMessage');
+            
+            if (employees.length === 0) {
+                tbody.innerHTML = '';
+                emptyMessage.style.display = 'block';
+                return;
+            }
+            
+            emptyMessage.style.display = 'none';
+            var html = '';
+            
+            for (var i = 0; i < employees.length; i++) {
+                var emp = employees[i];
+                html += '<tr>';
+                html += '<td class="employee-name">' + emp.name + '</td>';
+                
+                for (var j = 0; j < 7; j++) {
+                    var status = emp.schedule[j];
+                    html += '<td>';
+                    html += '<select class="' + getStatusClass(status) + '" onchange="updateStatus(' + i + ', ' + j + ', this.value)">';
+                    html += '<option value="عمل"' + (status === 'عمل' ? ' selected' : '') + '>عمل</option>';
+                    html += '<option value="اجازة"' + (status === 'اجازة' ? ' selected' : '') + '>اجازة</option>';
+                    html += '<option value="اكسسوار"' + (status === 'اكسسوار' ? ' selected' : '') + '>اكسسوار</option>';
+                    html += '</select>';
+                    html += '</td>';
+                }
+                
+                html += '<td><button class="btn-delete" onclick="removeEmployee(' + i + ')">حذف</button></td>';
+                html += '</tr>';
+            }
+            
+            tbody.innerHTML = html;
+        }
+
+        function addEmployee() {
+            var nameInput = document.getElementById('employeeName');
+            var name = nameInput.value.trim();
+            
+            if (name === '') {
+                showToast('يرجى إدخال اسم الموظف', 'error');
+                return;
+            }
+            
+            for (var i = 0; i < employees.length; i++) {
+                if (employees[i].name === name) {
+                    showToast('الموظف موجود بالفعل', 'error');
+                    return;
+                }
+            }
+            
+            employees.push({
+                name: name,
+                schedule: ['عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل', 'عمل']
+            });
+            
+            nameInput.value = '';
+            renderTable();
+            showToast('تم إضافة الموظف بنجاح', 'success');
+        }
+
+        function removeEmployee(index) {
+            if (confirm('هل تريد حذف هذا الموظف؟')) {
+                employees.splice(index, 1);
+                renderTable();
+                showToast('تم حذف الموظف', 'success');
+            }
+        }
+
+        function updateStatus(empIndex, dayIndex, newStatus) {
+            employees[empIndex].schedule[dayIndex] = newStatus;
+            renderTable();
+        }
+
+        function exportToPDF() {
+            var printContent = generatePrintContent();
+            var printWindow = window.open('', '_blank');
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+            
+            setTimeout(function() {
+                printWindow.print();
+                printWindow.close();
+            }, 500);
+            
+            showToast('تم فتح نافذة الطباعة', 'success');
+        }
+
+        function generatePrintContent() {
+            var days = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'];
+            var today = new Date().toLocaleDateString('ar-EG');
+            
+            var html = '<!DOCTYPE html>';
+            html += '<html dir="rtl">';
+            html += '<head>';
+            html += '<meta charset="UTF-8">';
+            html += '<title>جدول العمل الأسبوعي</title>';
+            html += '<style>';
+            html += 'body { font-family: Arial; direction: rtl; margin: 20px; }';
+            html += 'h1 { text-align: center; color: #333; margin-bottom: 10px; }';
+            html += '.date { text-align: center; color: #666; margin-bottom: 30px; }';
+            html += 'table { width: 100%; border-collapse: collapse; }';
+            html += 'th, td { border: 2px solid #333; padding: 8px; text-align: center; font-size: 14px; }';
+            html += 'th { background: #007bff; color: white; font-weight: bold; }';
+            html += '.employee { background: #f8f9fa; font-weight: bold; }';
+            html += '.work { background: #28a745; color: white; }';
+            html += '.holiday { background: #dc3545; color: white; }';
+            html += '.accessory { background: #6f42c1; color: white; }';
+            html += '.legend { margin-top: 20px; text-align: center; font-size: 12px; }';
+            html += '@media print { body { margin: 0; } }';
+            html += '</style>';
+            html += '</head>';
+            html += '<body>';
+            
+            html += '<h1>📅 جدول العمل الأسبوعي</h1>';
+            html += '<div class="date">تاريخ الطباعة: ' + today + '</div>';
+            
+            html += '<table>';
+            html += '<thead><tr>';
+            html += '<th>الموظف</th>';
+            for (var i = 0; i < days.length; i++) {
+                html += '<th>' + days[i] + '</th>';
+            }
+            html += '</tr></thead>';
+            
+            html += '<tbody>';
+            for (var i = 0; i < employees.length; i++) {
+                var emp = employees[i];
+                html += '<tr>';
+                html += '<td class="employee">' + emp.name + '</td>';
+                
+                for (var j = 0; j < emp.schedule.length; j++) {
+                    var status = emp.schedule[j];
+                    var cssClass = getStatusClass(status);
+                    html += '<td class="' + cssClass + '">' + status + '</td>';
+                }
+                html += '</tr>';
+            }
+            html += '</tbody>';
+            html += '</table>';
+            
+            html += '<div class="legend">';
+            html += '<p><strong>الألوان:</strong> العمل (أخضر) | الإجازة (أحمر) | الإكسسوار (بنفسجي)</p>';
+            html += '</div>';
+            
+            html += '</body>';
+            html += '</html>';
+            
+            return html;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTable();
+            
+            document.getElementById('employeeName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    addEmployee();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
